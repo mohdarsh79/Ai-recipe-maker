@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Recipe Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🍳 AI Recipe Generator</h1>
+    <p>Enter your ingredients and preferences to create a custom recipe!</p>
+
+    <form id="recipeForm">
+      <div class="form-grid">
+        <div>
+          <label>Cuisine Type</label>
+          <select id="cuisine">
+            <option value="">Any</option>
+            <option>Italian</option>
+            <option>Indian</option>
+            <option>Chinese</option>
+            <option>Mexican</option>
+            <option>Japanese</option>
+            <option>American</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Cooking Time (minutes)</label>
+          <select id="cooking_time">
+            <option value="">Select</option>
+            <option>20</option>
+            <option>30</option>
+            <option>40</option>
+            <option>60</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Dietary Preferences</label>
+          <select id="dietary_preferences">
+            <option value="">None</option>
+            <option>Vegetarian</option>
+            <option>Vegan</option>
+            <option>Keto</option>
+            <option>Gluten-Free</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Main Ingredients</label>
+      <input type="text" id="ingredients" placeholder="e.g., chicken, garlic, onion" required />
+
+      <button type="submit">Generate Recipe</button>
+    </form>
+
+    <div id="loading" class="loading" style="display:none;">⏳ Generating your recipe...</div>
+    <div id="recipeOutput"></div>
+  </div>
+
+  <script>
+    
+  const form = document.getElementById("recipeForm");
+  const outputDiv = document.getElementById("recipeOutput");
+  const loadingDiv = document.getElementById("loading");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    outputDiv.innerHTML = "";
+    loadingDiv.style.display = "block";
+
+    const cuisine = document.getElementById("cuisine").value;
+    const cooking_time = document.getElementById("cooking_time").value;
+    const dietary_preferences = document.getElementById("dietary_preferences").value;
+    const ingredients = document.getElementById("ingredients").value.split(",").map(i => i.trim());
+
+    try {
+      const res = await fetch("/generate-recipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ingredients,
+          cuisine,
+          dietary_preferences,
+          cooking_time
+        })
+      });
+
+     
+      let data;
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Backend did not return JSON. Raw response:\n${text}`);
+      }
+
+      loadingDiv.style.display = "none";
+
+      if (data.error) {
+        outputDiv.innerHTML = `<p class="error">⚠️ ${data.error}</p>`;
+        return;
+      }
+
+      outputDiv.innerHTML = `
+        <div class="recipe-card">
+          <div class="recipe-header">
+            <h2>${data.recipe_name}</h2>
+            <div class="recipe-tags">
+              <span class="tag">${cuisine || "Any Cuisine"}</span>
+              <span class="tag">🕒 ${cooking_time || "Flexible"} min</span>
+            </div>
+          </div>
+          <div class="recipe-section">
+            <h3>🧂 Ingredients</h3>
+            <ul>${data.ingredients.map(i => `<li>${i}</li>`).join("")}</ul>
+          </div>
+          <div class="recipe-section">
+            <h3>👩‍🍳 Instructions</h3>
+            <ol>${data.instructions.map(i => `<li>${i}</li>`).join("")}</ol>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      loadingDiv.style.display = "none";
+      outputDiv.innerHTML = `<p class="error">❌ ${err.message}</p>`;
+    }
+  });
+  </script>
+</body>
+</html>
