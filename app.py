@@ -5,7 +5,7 @@ from bytez import Bytez
 
 app = Flask(__name__)
 
-BYTEZ_API_KEY = os.getenv("BYTEZ_API_KEY", "5cfc01a089b1c0ad552aebfe0efe905c")
+BYTEZ_API_KEY = os.getenv("BYTEZ_API_KEY", "YOUR API")
 MODEL_ID = "Qwen/Qwen3-4B-Instruct-2507"
 sdk = Bytez(BYTEZ_API_KEY)
 model = sdk.model(MODEL_ID)
